@@ -1,0 +1,14 @@
+{
+	"folders": [
+		{
+			"path": "."
+		}
+	],
+	"settings": {
+		"python.analysis.autoFormatStrings": true,
+		"editor.defaultFormatter": "ms-python.autopep8",
+		"editor.formatOnPaste": true,
+		"editor.formatOnSave": true,
+		"jupyter.interactiveWindow.textEditor.executeSelection": true
+	}
+}
