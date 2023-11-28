@@ -81,6 +81,7 @@ def consolidate_events(syllabus: tuple) -> tuple:
     ['1', '', 'P2.070', '6.5']) 
     ```
     Notice how the P2.010 event extends into the following list. 
+    Limitations: This will leave a hanging runon as-is.
 
     Args:
         syllabus (tuple): The syllabus to be manipulated
@@ -89,6 +90,11 @@ def consolidate_events(syllabus: tuple) -> tuple:
         >>> example_syllabus = (['1', 'ICW', 'P2.010-', ''], ['1', '', 'P2.070', '6.5'], ['2', 'CAI', 'P1.080', '2'])
         >>> consolidate_events(example_syllabus)
         (['1', 'ICW', 'P2.010-P2.070', '6.5'], ['2', 'CAI', 'P1.080', '2'])
+
+        # hanging runon will return it as-is. No error, but does not remove the hanging '-'
+        >>> example_syllabus = (['1', 'ICW', 'P2.010-', ''],)
+        >>> consolidate_events(example_syllabus)
+        (['1', 'ICW', 'P2.010-', ''],)
 
     Returns:
         tuple: The corrected tuple with multi-line events removed.
@@ -127,18 +133,28 @@ def check_runon(event: list, delimiter: str = '-') -> bool:
         event_day (list): line of the list to be checked
 
     Examples:
-        >>> check_runon([1, 'ICW', 'P2.010-', ''])
+        # With whitespace
+        >>> check_runon([1, 'ICW', 'P2.010- ', ''])
         True
+
         >>> check_runon([1, 'ICW', 'P2.010', ''])
         False
 
-    Returns:
-        bool: True if the last symbol is '-', false otherwise
-    """
-    event_code = event[2]
-    final_character = len(event_code) - 1
+        # Without Whitespace
+        >>> check_runon([1, 'ICW', 'P2.010-', ''])
+        True
 
-    return event_code[final_character] == delimiter
+        # Alternate delimiter
+        >>> check_runon([1, 'ICW', 'P2.010:', ''], ':')
+        True
+
+    Returns:
+        bool: True if the last symbol matches the delimiter, False otherwise
+    """
+    # Pull the event code and strip off any whitespace on the edges.
+    event_code = event[2].strip()
+
+    return event_code.endswith(delimiter)
 
 
 def combine_events(events: list) -> list:
@@ -158,9 +174,18 @@ def combine_events(events: list) -> list:
         >>> combine_events(sample_events)
         [1, 'ICW', 'P2.010-   ', '6.5']
 
+        >>> sample_events = [[1, 'ICW', 'P2.010-   ', ''], [1, '', '', '6.5'], [1, '', 'P2.100', '1.0']]
+        >>> combine_events(sample_events)
+        Traceback (most recent call last):
+        ...
+        ValueError: The provided list must contain just 2 events
+
     Returns:
         list: The combined list in one line
     """
+    if len(events) != 2:
+        raise ValueError("The provided list must contain just 2 events")
+
     copy = events.copy()[0]
     first_string = events[0][2]
     second_string = events[1][2]
