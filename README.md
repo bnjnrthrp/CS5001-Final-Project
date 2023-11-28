@@ -117,8 +117,150 @@ There are no dependencies required for the project, however it does import the f
 ## Code Review
 Go over key aspects of code in this section. Both link to the file, include snippets in this report (make sure to use the [coding blocks](https://github.com/adam-p/markdown-here/wiki/Markdown-Cheatsheet#code)).  Grading wise, we are looking for that you understand your code and what you did. 
 
+The first step gets the file input and desired output file names, attempts the open the file and read the lines. From there, we have a lot of cleaning and adjusting of the data to put it in our desired shape.
+
+The first step is cleaning the CSV data and formatting, which uses the functions in csv_lib.py. clean_data() is basically a runner for several helper functions:
+``` python
+def clean_data(data: tuple) -> tuple:
+    rtn = []
+    for row in data:
+        cleaned_rows = clean_row(row)
+        rtn.append(cleaned_rows)
+        cleaned_data = remove_blank_lines(rtn)
+    return tuple(cleaned_data)
+```
+clean_rows() searches for invalid characters. This could be anything non-alphanumeric or symbolic that you'd expect in an english document.
+If a row contains invalid characters, it removes the content of the invalid cells but lets the others remain. The return from this phase then gets sent to a temporary list, which then has any blank rows removed. The final return is considered the "cleaned" data in the sense that all the characters are valid and all of the empty rows are removed.
+
+Next, we have to do a more refined filter to remove some of the processed data embedded in the original file. Examples were: each day "block" has its own individual header row, as well as a row at the bottom summing the total number of hours spent on a single day. These were superfluous and needed to be deleted. We can control what phrases get removed by editing the ROWS_TO_DELETE constant, so we can avoid editing the code directly.
+
+``` python
+def remove_line(lines: tuple, phrase: List[str]) -> tuple:
+    cleaned_list = []
+    # Searches line by line, and then goes into each individual item in the list
+    for line in lines:
+        # For each line, search for the phrase.
+        keyword_not_found = True
+        for item in line:
+            for keyword in phrase:
+                if keyword.casefold() in item.casefold():
+                    keyword_not_found = False
+        if keyword_not_found:
+            cleaned_list.append(line)
+
+    return tuple(cleaned_list)
+```
+
+The final output of this cleaned data is the completion of the csv modifications, as it was pretty generic data cleaning and could be used in other applications. There is no specific shape requirement for the size of the file up to this point, but now we are going into our program-specific structure and using the syllabus_lib file for final processing.
+
+At this point, each block of "days" has a title cell announcing "Day Z" where Z is the day number. It's the only cell in that row. The following cells are all event types and codes that are on that specific day. We know we've reached the end of the day's events when we reach the "Day Z+1" header on the next line.
+
+Our next step is to normalize the data so that instead of linking each line of events to a separate line that specifies the day, we distribute the day to each line of events, so we grow from 3 columns to 4, and make "Day" the 1st column. 
+
+The second step of this normalization is to consolidate the events that show an overrun in the cells with the consolidate_events() function.
+
+Here's the example from above that shows the run-on between two lines
+| 1   | ICW            | P2.010- |     |
+| 1   |                | P2.070  | 6.5 |
+
+This uses two helper functions, check_runon() and combine_events() to go line by line and see if there's a runon indicator (defaulted to the delimiter '-'), and then combine any 2 events into a single event line. This normalized syllabus is now ready for the final transformation: compressing the entire syllabus so that each line is just 1 day of events.
+
+The consolidate_days() function initializes a blank dictionary for each new day via a day counter. When the program reaches a line with a day that doesn't match the day counter, the program knows it's reached a new day. Abbreviating the code that provides the context, the day counter method works specifically here:
+
+``` python
+day_counter = 0
+if day_counter != current_line[0]:
+    day_counter = current_line[0]
+    day_dict = initialize_syllabus_dict(EVENT_TYPES)
+```
+The way we associate all of these into the same day is that each line becomes a dictionary with the key "Day" having the value of its associated day. Then, the remaining categories each become keys and the values are initialized as individual lists. The primary categories we could have are:
+['DAY', 'ICW', 'PTT', 'CAI', 'IGR', 'LAB', 'MISC', 'HRS', 'LOCATION', 'FLT', 'SIM']
+
+initialize_syllabus_dict(EVENT_TYPES) returns:
+{'DAY': [],
+'ICW': [],
+'PTT': [], 
+'CAI': [], 
+'IGR': []
+.
+.
+.} (you get the idea)
+
+
+We then go line by line and append the event codes onto the respective list to avoid overwriting anything when we come across two of the same event types within a single day. 
+These can be modified at the top with the EVENT_TYPES constant.
+
+Some of these don't have any use yet, such as "LOCATION." The current data provided doesn't specify locations for where to do events, but the final Excel tool that will use this data may use this field, so it is left in there.
+
+
+After it finishes consolidating a line, it preemptively checks the following line to see if a new day is coming or not. This solves the issue of moving on to a new day before outputting the now built day's worth of events in a line.
+``` python
+next_line = syllabus[index + 1]
+    if current_line[0] != next_line[0]:
+        rtn.append(day_dict)
+    index += 1
+```
+
+Finally, once that is all complete, we write to the new file and use the csv library to assist us in writing each line from the dictionaries.
+
+The final output may look a little strange, since all cells that were empty essentially has brackets and quotes. This is ok, because at this point we are ready to import into Excel and some quick find/replace options would quickly remove these characters.
+
+
 ### Major Challenges
 Key aspects could include pieces that your struggled on and/or pieces that you are proud of and want to show off. 
+
+One of the major changes was keeping track of the data's current state as it went from cleaning function to cleaning function. Each time data is manipulated is an opportunity for data to be lost or corrupted, so ensuring that the data values remained as unaffected as possible was a challenge. 
+
+I mitigated this by breaking the different tasks into multiple miniature programs, so the csv lib has a "main" runner (clean_data) and syllabus_lib has normalize_syllabus. These could have been called individually by main, but for the sake of abstraction I wanted to break them apart because it provided good checkpoints for the data as it was returned from those function runners.
+
+Additionally, I used different variable assignments for each stage of the data cleaning/transformation process. This was for readability and to make debugging easier, as you could more intuitively insert debug print statements.
+
+The other major challenge was consolidating each day together, and ensuring each category got to the right key in the dictionary. The issue was that the desired data could be in one of two columns: The Event_Code was only used for specific classes in the ICW, CAI, and IGR categories, because it specified the class code to be used. However, for all other events (flights, simulators, PTT, etc), the event code does not get used in practice, but instead the event_type contains the "title" such as FAM 1, OFT 3, etc. As a result, I broke up these different categories as we went through an if/else decision tree:
+``` python 
+if title[:3] in FLIGHT_EVENTS:
+                event_code = title
+                title = 'FLT'
+
+elif title[:3] in SIM_EVENTS:
+    event_code = title
+    title = 'SIM'
+
+elif title[:3] in CLASS_TYPES:
+    title = title[:3]
+
+elif title[:3] in IGNORE_EVENTS:
+    event_code = title
+    title = 'MISC'
+
+elif title[:3] in PTT_EVENT:
+    event_code = title[4:]
+    title = title[:3]
+
+elif title in MISNOMER_CLASSES:
+    event_code = title
+    title = 'LAB'
+
+else:  # Catchall for anything that is leftover
+    event_code = title
+    title = 'LAB'
+
+day_dict[title].append(event_code)
+```
+
+In essence, it goes through a flow chart like below (this one has been abbreviated)
+``` mermaid
+flowchart TD
+    A[normalized_syllabus] --> B(consolidate_days)
+    B --> C{Determine category}
+    C --> D{FLT_EVENTS i.e. FAM, SAR, DIP}
+    D --> |Not FLT|E{SIM_EVENTS i.e. OFT, TOFT}
+    E --> |Not SIM|F{CLASSROOM i.e. IGR, CAI}
+    D -->|Yes\nevent_code = title, title = 'FLT'| G(add to day_dict)
+    E -->|Yes\nevent_code = title, title = 'SIM'| G(add to day_dict)
+    F -->|Yes\ntitle is first 3 of CLASSROOM| G(add to day_dict)
+    G -->H[return day_dict]
+```
+  
 
 
 ## Example Runs
@@ -127,13 +269,19 @@ Explain how you documented running the project, and what we need to look for in 
 ## Testing
 How did you test your code? What did you do to make sure your code was correct? If you wrote unit tests, you can link to them here. If you did run tests, make sure you document them as text files, and include them in your submission. 
 
-> _Make it easy for us to know you *ran the project* and *tested the project* before you submitted this report!_
+During each step of the transformation, I used docstring testing to build unit tests prior to iterating the function. Edge cases were focused on odd characters and typos that I would expect to find in the final product that is provided.
+Functional testing was broken into two major checkpoints - the intermediate step to ensure the csv_lib was working correctly. Then the final product to verify that the syllabus_lib was processing the csv_lib output correctly.
 
+The final run is checking the output file against the expected result
 
 ## Missing Features / What's Next
 Focus on what you didn't get to do, and what you would do if you had more time, or things you would implement in the future. 
 
-There are some features to be added later, if desired, to make the program more robust. One major hurdle that currently is solved with pre-processing is taking the published input data from a "monthly calendar" structure into a single major column that this program processes. The main structure is a width of 15 columns, where each group of 3 columns is a single day's worth of events. These columns of 15 then go down the rows in groups of 5 to show a generic "work-week" shape structure. Currently, iterating to the right side of the CSV file creates additional complexity that is not supported, and the users must first manually change the file into a single column of a group of 3.
+There are some features to be added later, if desired, to make the program more robust. One major hurdle that currently is solved with pre-processing is taking the published input data from a "monthly calendar" structure into a single major column that this program processes. The main structure is a width of 15 columns, where each group of 3 columns is a single day's worth of events. These columns of 15 then go down the rows in groups of 5 to show a generic "work-week" shape structure. Currently, iterating to the right side of the CSV file creates additional complexity that is not supported, and the users must first manually change the file into a single column of a group of 3. 
+
+In syllabus_lib, the function check_runon() supports a specified delimiter to determine the flag for a range of events. It's defaulted to '-' (such as P1.080-P1.120), but could be used in other programs with a different indicator (Example range 1:10). In this iteration of the program, one challenge is carrying the specified delimiter deep enough into the program so that it reaches the check_runon() function. In this design, it is there as a helper function and gets called by consolidate_events(), which in turn gets called by normalize_syllabus(). Having this delimiter argument added to each of the next functions only to be used as an argument to the next seems like an added complexity to the more shallow functions reducing the complexity. In the current scope of the program, this delimiter feature is not required, since the provided CSV will always use '-' as it's delimiter. It remains coded in as a feature should another program use this library.
 
 ## Final Reflection
 Write at least a paragraph about your experience in this course. What did you learn? What do you need to do to learn more? Key takeaways? etc.
+
+check_valid_characters() is overaggressive

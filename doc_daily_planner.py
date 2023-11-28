@@ -83,7 +83,7 @@ def print_help() -> None:
     print("Options:")
     print("  -f filename: The name of the syllabus to modify.")
     print("  -h or --help: Print this help message and exit")
-    print("  -r or --runon: the symbol that delineates what the runon character is (default '-')")
+    print("  -r or --runon: (CURRENTLY UNAVAILABLE) the symbol that delineates what the runon character is (default '-')")
     print("  -o filename: The name of the file to write the output to.",
           "If filename is not provided, but -o is used then the default file",
           "name is syllabus.csv.")

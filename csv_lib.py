@@ -24,7 +24,7 @@ def check_valid_characters(words: str) -> bool:
     and punctuation symbols, returns True if all characters valid.
 
     Args:
-        word (str): the word to be checked
+        words (str): the word(s) to be checked
 
     Examples:
         >>> check_valid_characters('test123!@#')
@@ -40,14 +40,6 @@ def check_valid_characters(words: str) -> bool:
     Returns:
         bool: True if all characters are alphanumeric or punctuation symbols.
     """
-    if len(words.split()) > 1:
-        chunk = words.split()
-        for chunk in words.split():
-            chunk_check = check_valid_characters(chunk)
-            if chunk_check is False:
-                return False
-        return True
-
     for letter in words:
         if letter not in CHARACTERS:
             return False
@@ -63,8 +55,8 @@ def clean_row(row: list) -> list:
     Examples:
         >>> clean_row(['DAY_1', '', ''])
         ['DAY_1', '', '']
-        >>> clean_row(['ï»¿', '', ''])
-        ['', '', '']
+        >>> clean_row(['ï»¿', '1', '2'])
+        ['', '1', '2']
 
     Returns:
         list: the cleaned row
