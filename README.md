@@ -270,8 +270,6 @@ example_input_2.csv is a more strenuous test, and it contains every type of even
 example 3 is the full 180-day syllabus and is the final product of the actual data to be entered. This file is the base syllabus and all other flavors of syllabus are derivative of this one.
 
 ## Testing
-How did you test your code? What did you do to make sure your code was correct? If you wrote unit tests, you can link to them here. If you did run tests, make sure you document them as text files, and include them in your submission. 
-
 During each step of the transformation, I used docstring testing to build unit tests prior to iterating the function. Edge cases were focused on odd characters and typos that I would expect to find in the final product that is provided.
 Functional testing was broken into two major checkpoints - the intermediate step to ensure the csv_lib was working correctly. 
 The file test_data_cleaning.csv shows the output prior to being sent to the consolidate_syllabus() function and was the final check to ensure all of the data from the original file was being processed correctly into an acceptable file for the final function run.
@@ -279,8 +277,6 @@ The file test_data_cleaning.csv shows the output prior to being sent to the cons
 Then the final product to verify that the syllabus_lib was processing the csv_lib output correctly. This was the final consolidation of the days and events and would be checked against the expected result. We tested this by comparing it to a smaller sample, approximately 30 days worth of data (example 1), testing it on 70 days of schedule (example 2), and then the final full product (example 3).
 
 ## Missing Features / What's Next
-Focus on what you didn't get to do, and what you would do if you had more time, or things you would implement in the future. 
-
 There are some features to be added later, if desired, to make the program more robust. One major hurdle that currently is solved with pre-processing is taking the published input data from a "monthly calendar" structure into a single major column that this program processes. The main structure is a width of 15 columns, where each group of 3 columns is a single day's worth of events. These columns of 15 then go down the rows in groups of 5 to show a generic "work-week" shape structure. Currently, iterating to the right side of the CSV file creates additional complexity that is not supported, and the users must first manually change the file into a single column of a group of 3. 
 
 In syllabus_lib, the function check_runon() supports a specified delimiter to determine the flag for a range of events. It's defaulted to '-' (such as P1.080-P1.120), but could be used in other programs with a different indicator (Example range 1:10). In this iteration of the program, one challenge is carrying the specified delimiter deep enough into the program so that it reaches the check_runon() function. In this design, it is there as a helper function and gets called by consolidate_events(), which in turn gets called by normalize_syllabus(). Having this delimiter argument added to each of the next functions only to be used as an argument to the next seems like an added complexity to the more shallow functions reducing the complexity. In the current scope of the program, this delimiter feature is not required, since the provided CSV will always use '-' as it's delimiter. It remains coded in as a feature should another program use this library.
@@ -288,8 +284,6 @@ In syllabus_lib, the function check_runon() supports a specified delimiter to de
 The final consideration is to figure out how to import these programs into Excel 365 so that it can be used organically by Excel. The current challenge for the typical user is working through how to run the program assuming they are not familiar with the command prompt, etc. Having this embedded into an excel file so that we can import the source file, run this program, and then also run the following Excel VBA scripts to finish post-processing would make it a much more sustainable program by reducing input points by the user.
 
 ## Final Reflection
-Write at least a paragraph about your experience in this course. What did you learn? What do you need to do to learn more? Key takeaways? etc.
-
 This course has been an amazing experience in building robust software and has shown me the path to go from amateur code-writer towards a professional software engineer. My greatest struggle was creating products that could stand the test of time and be flexible enough to handle inputs from left-field without breaking, and the push for standardization, readable code, and outside-the-box thinking has been enlightening. I particularly enjoyed the group meetings and the guided learning that happened in this, as it gave me a chance to take a peek at how other people write code for the same problem. This different perspective often showed me a better or more efficient way to solve a problem and was just as valuable of a learning experience.
 
 I need to stay consistent in breaking down problems into smaller pieces to avoid creating a giant "main", and to continue working with github to align with professional standards. I also hope to continue working with the command prompt as I go deeper into the computer rather than interfacing with the GUI intermediaries. 
