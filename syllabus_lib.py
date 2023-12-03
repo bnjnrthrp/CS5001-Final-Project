@@ -208,10 +208,14 @@ def combine_events(events: list, delimiter: str = '-', type: bool = False) -> li
     if len(events) != 2:
         raise ValueError("The provided list must contain just 2 events")
 
+    # Allows capture of event-time which may be on the top row for single event over multiple lines, or
+    # bottom row if it's a run-on event over multiple lines.
     time = events[0][3]
     if time == "":
         time = events[1][3]
 
+    # Determines which column we want to combine events for. Column 2 (event code) is default, but
+    # shifts to column 1 (type) for single events over multiple lines i.e. OFT NATOPS X
     column = 2
     if type:
         column = 1
@@ -220,8 +224,11 @@ def combine_events(events: list, delimiter: str = '-', type: bool = False) -> li
     first_string = events[0][column].strip()
     second_string = events[1][column].strip()
 
+    # Catches edge case if a run-on event is missing the delimiter and it was discovered retroactively
     if not first_string.endswith(delimiter) and not type:
         first_string += delimiter
+
+    # Edge case of single event running on to next line, replaces the whitespace that was removed above.
     elif not first_string.endswith(delimiter) and type:
         # Re-add the space back behind the first string
         first_string += " "
@@ -306,11 +313,11 @@ def consolidate_days(syllabus: Tuple[list]) -> Tuple[dict]:
             # All titles can be identified by their first 3 characters, to standardize the lookups.
             # Will branch individually, set the correct event_code and title variables, then come together at the end.
 
-            if title[:3] in SIM_EVENTS:
+            if title[:3] in SIM_EVENTS and title not in MISNOMER_CLASSES:
                 event_code = title
                 title = 'SIM'
 
-            elif title[:3] in FLIGHT_EVENTS:
+            elif title[:3] in FLIGHT_EVENTS and title not in MISNOMER_CLASSES:
                 event_code = title
                 title = 'FLT'
 
@@ -324,7 +331,7 @@ def consolidate_days(syllabus: Tuple[list]) -> Tuple[dict]:
             elif title[:3] in PTT_EVENT:
                 event_code = title[4:]
                 title = title[:3]
-
+            # Some classes will share a code with the above
             elif title in MISNOMER_CLASSES:
                 event_code = title
                 title = 'LAB'
