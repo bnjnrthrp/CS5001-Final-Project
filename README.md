@@ -93,8 +93,6 @@ python doc_daily_planner.py -f input_file.csv
 Asking for help menu
 ```
 python doc_daily_planner.py -h
-
-returns
 ```
 
 
@@ -264,7 +262,11 @@ flowchart TD
 
 
 ## Example Runs
-Explain how you documented running the project, and what we need to look for in your repository (text output from the project, small videos, links to videos on youtube of you running it, etc)
+Explain how you documented running the project, and what we need to look for in your repository (text output from the project, small videos, links to videos on youtube of you running it, etc).
+
+To see example runs and test results, check the test_files folder. example_input_1.csv shows a generic input that is contains standard inputs of classes, with examples of a run-on situation and some of the extraneous data (such as training hours).
+
+example_input_2.csv is a more strenuous test, and it contains every type of event in the syllabus. This is the full syllabus for one type of student.
 
 ## Testing
 How did you test your code? What did you do to make sure your code was correct? If you wrote unit tests, you can link to them here. If you did run tests, make sure you document them as text files, and include them in your submission. 
