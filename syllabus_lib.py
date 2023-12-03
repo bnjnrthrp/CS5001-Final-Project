@@ -117,6 +117,21 @@ def consolidate_events(syllabus: tuple) -> tuple:
             # Attaches the combined event to the rtn
             rtn.append(combined_event)
             index += 2  # Skips a line in the index, which is the second half of the consolidated event
+
+        elif event[1] == "":
+            previous_event = copy[index - 1]
+            combined_event = combine_events([previous_event, event])
+            rtn.pop()
+            rtn.append(combined_event)
+            index += 1
+
+        elif event[2] == "":
+            previous_event = copy[index - 1]
+            combined_event = combine_events([previous_event, event], type=True)
+            rtn.pop()
+            rtn.append(combined_event)
+            index += 1
+
         else:
             # If not the end of the syllabus and the event doesn't runon to the next line, add it to the rtn list.
             rtn.append(copy[index])
@@ -157,13 +172,16 @@ def check_runon(event: list, delimiter: str = '-') -> bool:
     return event_code.endswith(delimiter)
 
 
-def combine_events(events: list) -> list:
+def combine_events(events: list, delimiter: str = '-', type: bool = False) -> list:
     """Takes 2 lines of events that have a runon code, and returns the combined event. Only combined 2 lines worth of events.
     Will only take the event number and time to complete from the second event. Does not ignore whitespace, punctuation, etc.
     Does not validate that the two events are compatible.
 
     Args:
         events (list): list of 2 event lines to be combined.
+        delimiter (str): defaults to '-', identifies the specific delimiter for the range
+        type (bool): when True, combines the 1 index column (type category) rather than the class codes.
+            Used for when combining JMPS evends, SHEELD LAB, etc, OFT NATOPS CHECK
 
     Examples:
         >>> sample_events = [[1, 'ICW', 'P2.010-', ''], [1, '', 'P2.070', '6.5']]
@@ -172,13 +190,17 @@ def combine_events(events: list) -> list:
 
         >>> sample_events = [[1, 'ICW', 'P2.010-   ', ''], [1, '', '', '6.5']]
         >>> combine_events(sample_events)
-        [1, 'ICW', 'P2.010-   ', '6.5']
+        [1, 'ICW', 'P2.010-', '6.5']
 
-        >>> sample_events = [[1, 'ICW', 'P2.010-   ', ''], [1, '', '', '6.5'], [1, '', 'P2.100', '1.0']]
+        >>> sample_events = [[1, 'ICW', 'P2.010-', ''], [1, '', '', '6.5'], [1, '', 'P2.100', '1.0']]
         >>> combine_events(sample_events)
         Traceback (most recent call last):
         ...
         ValueError: The provided list must contain just 2 events
+
+        >>> sample_events = [[1, 'OFT ', '12.080', '6.0'], [1, 'NATOPS X', '', '']]
+        >>> combine_events(sample_events, type=True)
+        [1, 'OFT NATOPS X', '12.080', '6.0']
 
     Returns:
         list: The combined list in one line
@@ -186,12 +208,26 @@ def combine_events(events: list) -> list:
     if len(events) != 2:
         raise ValueError("The provided list must contain just 2 events")
 
-    copy = events.copy()[0]
-    first_string = events[0][2]
-    second_string = events[1][2]
+    time = events[0][3]
+    if time == "":
+        time = events[1][3]
 
-    copy[2] = first_string + second_string
-    copy[3] = events[1][3]
+    column = 2
+    if type:
+        column = 1
+
+    copy = events.copy()[0]
+    first_string = events[0][column].strip()
+    second_string = events[1][column].strip()
+
+    if not first_string.endswith(delimiter) and not type:
+        first_string += delimiter
+    elif not first_string.endswith(delimiter) and type:
+        # Re-add the space back behind the first string
+        first_string += " "
+
+    copy[column] = first_string + second_string
+    copy[3] = time
 
     return copy
 
@@ -269,13 +305,14 @@ def consolidate_days(syllabus: Tuple[list]) -> Tuple[dict]:
             # Maps the different types of events to the correct key in each dictionary.
             # All titles can be identified by their first 3 characters, to standardize the lookups.
             # Will branch individually, set the correct event_code and title variables, then come together at the end.
-            if title[:3] in FLIGHT_EVENTS:
-                event_code = title
-                title = 'FLT'
 
-            elif title[:3] in SIM_EVENTS:
+            if title[:3] in SIM_EVENTS:
                 event_code = title
                 title = 'SIM'
+
+            elif title[:3] in FLIGHT_EVENTS:
+                event_code = title
+                title = 'FLT'
 
             elif title[:3] in CLASS_TYPES:
                 title = title[:3]
