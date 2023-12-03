@@ -1,21 +1,3 @@
-Benjamin Northrop
-docstring test output for syllabus_lib.py
-
-Trying:
-    check_blank_row(['DAY 1', '', ''])
-Expecting:
-    False
-ok
-Trying:
-    check_blank_row(['', '', ''])
-Expecting:
-    True
-ok
-Trying:
-    check_blank_row([' ', '-', ''])
-Expecting:
-    False
-ok
 Trying:
     check_runon([1, 'ICW', 'P2.010- ', ''])
 Expecting:
@@ -59,36 +41,6 @@ Expecting:
     False
 ok
 Trying:
-    check_valid_characters('test123!@#')
-Expecting:
-    True
-ok
-Trying:
-    check_valid_characters('TRAINING HOURS')
-Expecting:
-    True
-ok
-Trying:
-    check_valid_characters('ï»¿')
-Expecting:
-    False
-ok
-Trying:
-    check_valid_characters('TRAINING HOURSï»¿')
-Expecting:
-    False
-ok
-Trying:
-    clean_row(['DAY_1', '', ''])
-Expecting:
-    ['DAY_1', '', '']
-ok
-Trying:
-    clean_row(['ï»¿', '1', '2'])
-Expecting:
-    ['', '1', '2']
-ok
-Trying:
     sample_events = [[1, 'ICW', 'P2.010-', ''], [1, '', 'P2.070', '6.5']]
 Expecting nothing
 ok
@@ -104,10 +56,10 @@ ok
 Trying:
     combine_events(sample_events)
 Expecting:
-    [1, 'ICW', 'P2.010-   ', '6.5']
+    [1, 'ICW', 'P2.010-', '6.5']
 ok
 Trying:
-    sample_events = [[1, 'ICW', 'P2.010-   ', ''], [1, '', '', '6.5'], [1, '', 'P2.100', '1.0']]
+    sample_events = [[1, 'ICW', 'P2.010-', ''], [1, '', '', '6.5'], [1, '', 'P2.100', '1.0']]
 Expecting nothing
 ok
 Trying:
@@ -118,7 +70,16 @@ Expecting:
     ValueError: The provided list must contain just 2 events
 ok
 Trying:
-    example_syllabus = (['2','ICW','P2.120','1.0'], ['2','JMPS 1','P2.160','2.0'], ['3','ICW','P3.010-P3.100','5.5'], ['3','JMPS 2','P3.110','3.0'])
+    sample_events = [[1, 'OFT ', '12.080', '6.0'], [1, 'NATOPS X', '', '']]
+Expecting nothing
+ok
+Trying:
+    combine_events(sample_events, type=True)
+Expecting:
+    [1, 'OFT NATOPS X', '12.080', '6.0']
+ok
+Trying:
+    example_syllabus = (['2','ICW','P2.120','1.0'], ['2','JMPS 1','P2.160','2.0'], ['3','ICW','P3.010-P3.100','5.5'], ['3','JMPS 2','P3.110','3.0'])     
 Expecting nothing
 ok
 Trying:
@@ -203,67 +164,17 @@ Trying:
 Expecting:
     (['1', 'CAI', 'P1.060', '0.5'], ['1', 'ICW', 'P2.010-P2.070', '6.5'])
 ok
-Trying:
-    remove_blank_lines((['abc', '', ''], ['', '', ' '], ['', 'test', 'line 3']))
-Expecting:
-    (['abc', '', ''], ['', 'test', 'line 3'])
-ok
-Trying:
-    remove_blank_lines((['abc', 1, ''], ['', 2, ''], [3, 'test', 'line 3']))
-Expecting:
-    (['abc', 1, ''], ['', 2, ''], [3, 'test', 'line 3'])
-ok
-Trying:
-    remove_blank_lines([['', '', ''], ['', '', ''], ['', '', '']])
-Expecting:
-    ()
-ok
-Trying:
-    lst = [['DAY 1', '', ''], ['CAI', 'P1.060', '0.5'], ['TRAINING HOURS', '', '7']]
-Expecting nothing
-ok
-Trying:
-    remove_line(lst, ['training hours'])
-Expecting:
-    (['DAY 1', '', ''], ['CAI', 'P1.060', '0.5'])
-ok
-Trying:
-    lst = [['DAY 1', '', ''], ['CAI', 'P1.060', '0.5'], ['TRAINING HOURS', '', '7']]
-Expecting nothing
-ok
-Trying:
-    remove_line(lst, ['day 1'])
-Expecting:
-    (['CAI', 'P1.060', '0.5'], ['TRAINING HOURS', '', '7'])
-ok
-Trying:
-    lst = [['DAY 1', '', ''], ['CAI', 'P1.060', '0.5'], ['TRAINING HOURS', '', '7']]
-Expecting nothing
-ok
-Trying:
-    remove_line(lst, ['day 1', 'ca'])
-Expecting:
-    (['TRAINING HOURS', '', '7'],)
-ok
-4 items had no tests:
+1 items had no tests:
     __main__
-    __main__.__VSCODE_compute_hash
-    __main__.__VSCODE_wrap_run_cell
-    __main__.clean_data
-13 items passed all tests:
-   3 tests in __main__.check_blank_row
+8 items passed all tests:
    4 tests in __main__.check_runon
    5 tests in __main__.check_same_day
-   4 tests in __main__.check_valid_characters
-   2 tests in __main__.clean_row
-   6 tests in __main__.combine_events
+   8 tests in __main__.combine_events
    6 tests in __main__.consolidate_days
    4 tests in __main__.consolidate_events
    5 tests in __main__.distribute_days
    2 tests in __main__.initialize_syllabus_dict
    2 tests in __main__.normalize_syllabus
-   3 tests in __main__.remove_blank_lines
-   6 tests in __main__.remove_line
-52 tests in 17 items.
-52 passed and 0 failed.
+36 tests in 9 items.
+36 passed and 0 failed.
 Test passed.
