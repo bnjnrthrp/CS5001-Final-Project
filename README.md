@@ -20,7 +20,7 @@ Overall, we expect this tool to reduce the labor-requirement to build a new sche
 ## Key Features
 Highlight some key features of this project that you want to show off/talk about/focus on. 
 
-(All examples will have the actual data in the Examples folder under the names 'tutorial_x.csv', ASCII printouts have been provided for a general picture, but if formatting is an issue please refer to the tutorial files).
+(All examples will have the actual data in the test_files folder under the names 'example_input_x.csv', ASCII printouts have been provided for a general picture, but if formatting is an issue please refer to the tutorial files).
 
 The program will take the CSV file input, clean the sheet to pull out the raw data while ignoring some of the calculations that are included inside (such as the sum of training hours per day). The normal Excel "block" that would constitute a day will have a merged header, which specifies the day of activities. The next row has the headings for the columns, specifying the type, event code, and hours to complete. The number of rows in each block is typically 6 rows, but that is not guaranteed. At the bottom, they have summed the hours column. (For actual example, see example_input_2.csv)
 |                 DAY 2          | 
@@ -72,7 +72,7 @@ The final transformation is merging all of the same-day events into a matrix tha
 This matrix is vital for the Barnyard to function, as it has another built-in tool that uses this matrix for creating schedules. 
 
 ## Guide
-The project is run through the command terminal. The standard method is for the input CSV file to be in the same folder as this python program, and the output will be written in the same folder.
+The project is run through the command terminal. The standard method is for the input CSV file to be in the same folder as this python program, and the output will be written in the same folder. You may change the source and destination folders using relative path from the command prompt's current folder.
 
 Run the file by calling the main file doc_daily_planner.py, a '-f' flag followed by the input file name. There is an optional '-o' output flag so that you may specify the output file name. The default output file name is 'syllabus.csv'.
 
