@@ -244,9 +244,9 @@ In essence, it goes through a flow chart like below (this one has been abbreviat
 flowchart TD
     A[normalized_syllabus] --> B(consolidate_days)
     B --> C{Determine category}
-    C --> D{FLT_EVENTS i.e. FAM, SAR, DIP}
-    D --> |Not FLT|E{SIM_EVENTS i.e. OFT, TOFT}
-    E --> |Not SIM|F{CLASSROOM i.e. IGR, CAI}
+    C --> D{SIM_EVENTS i.e. OFT, TOFT}
+    D --> |Not SIM|E{FLT_EVENTS i.e. FAM, SAR, DIP}
+    E --> |Not FLT|F{CLASSROOM i.e. IGR, CAI}
     D -->|Yes\nevent_code = title, title = 'FLT'| G(add to day_dict)
     E -->|Yes\nevent_code = title, title = 'SIM'| G(add to day_dict)
     F -->|Yes\ntitle is first 3 of CLASSROOM| G(add to day_dict)
