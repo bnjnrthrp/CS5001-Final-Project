@@ -22,7 +22,7 @@ Highlight some key features of this project that you want to show off/talk about
 
 (All examples will have the actual data in the Examples folder under the names 'tutorial_x.csv', ASCII printouts have been provided for a general picture, but if formatting is an issue please refer to the tutorial files).
 
-The program will take the CSV file input, clean the sheet to pull out the raw data while ignoring some of the calculations that are included inside (such as the sum of training hours per day). The normal Excel "block" that would constitute a day will have a merged header, which specifies the day of activities. The next row has the headings for the columns, specifying the type, event code, and hours to complete. The number of rows in each block is typically 6 rows, but that is not guaranteed. At the bottom, they have summed the hours column. 
+The program will take the CSV file input, clean the sheet to pull out the raw data while ignoring some of the calculations that are included inside (such as the sum of training hours per day). The normal Excel "block" that would constitute a day will have a merged header, which specifies the day of activities. The next row has the headings for the columns, specifying the type, event code, and hours to complete. The number of rows in each block is typically 6 rows, but that is not guaranteed. At the bottom, they have summed the hours column. (For actual example, see example_input_2.csv)
 |                 DAY 2          | 
 | TYPE           | EVENT   | HRS |
 | CAI            | P1.080  | 2.0 |
@@ -72,8 +72,6 @@ The final transformation is merging all of the same-day events into a matrix tha
 This matrix is vital for the Barnyard to function, as it has another built-in tool that uses this matrix for creating schedules. 
 
 ## Guide
-How do we run your project? What should we do to see it in action? - Note this isn't installing, this is actual use of the project.. If it is a website, you can point towards the gui, use screenshots, etc talking about features. 
-
 The project is run through the command terminal. The standard method is for the input CSV file to be in the same folder as this python program, and the output will be written in the same folder.
 
 Run the file by calling the main file doc_daily_planner.py, a '-f' flag followed by the input file name. There is an optional '-o' output flag so that you may specify the output file name. The default output file name is 'syllabus.csv'.
@@ -97,15 +95,13 @@ python doc_daily_planner.py -h
 
 
 ## Installation Instructions
-If we wanted to run this project locally, what would we need to do?  If we need to get API key's include that information, and also command line startup commands to execute the project. If you have a lot of dependencies, you can also include a requirements.txt file, but make sure to include that we need to run `pip install -r requirements.txt` or something similar.
-
-To run the files locally, you'll need to download all the library files that are used in conjunction with doc_daily_planner.py. The files needed are:
+To run the files locally, you'll need to download the following 4 files that are used to run the program:
 - doc_daily_planner.py
 - csv_lib.py
 - syllabus_lib.py
 - file_view.py
   
-There are no dependencies required for the project, however it does import the following libraries automatically:
+There are no external dependencies required for the project, however it will import the following built-in libraries as part of the program:
 - sys
 - string
 - typing
@@ -113,8 +109,6 @@ There are no dependencies required for the project, however it does import the f
 
 
 ## Code Review
-Go over key aspects of code in this section. Both link to the file, include snippets in this report (make sure to use the [coding blocks](https://github.com/adam-p/markdown-here/wiki/Markdown-Cheatsheet#code)).  Grading wise, we are looking for that you understand your code and what you did. 
-
 The first step gets the file input and desired output file names, attempts the open the file and read the lines. From there, we have a lot of cleaning and adjusting of the data to put it in our desired shape.
 
 The first step is cleaning the CSV data and formatting, which uses the functions in csv_lib.py. clean_data() is basically a runner for several helper functions:
@@ -213,15 +207,16 @@ I mitigated this by breaking the different tasks into multiple miniature program
 
 Additionally, I used different variable assignments for each stage of the data cleaning/transformation process. This was for readability and to make debugging easier, as you could more intuitively insert debug print statements.
 
-The other major challenge was consolidating each day together, and ensuring each category got to the right key in the dictionary. The issue was that the desired data could be in one of two columns: The Event_Code was only used for specific classes in the ICW, CAI, and IGR categories, because it specified the class code to be used. However, for all other events (flights, simulators, PTT, etc), the event code does not get used in practice, but instead the event_type contains the "title" such as FAM 1, OFT 3, etc. As a result, I broke up these different categories as we went through an if/else decision tree:
-``` python 
-if title[:3] in FLIGHT_EVENTS:
-                event_code = title
-                title = 'FLT'
+The other major challenge was consolidating each day together, and ensuring each category got to the right key in the dictionary. The issue was that the desired data could be in one of two columns: The Event_Code was only used for specific classes in the ICW, CAI, and IGR categories, because it specified the class code to be used. However, for all other events (flights, simulators, PTT, etc), the event code does not get used in practice, but instead the event_type contains the "title" such as FAM 1, OFT 3, etc. As a result, I broke up these different categories as we went through an if/else decision tree: 
 
-elif title[:3] in SIM_EVENTS:
+``` python 
+if title[:3] in SIM_EVENTS and title not in MISNOMER_CLASSES:
     event_code = title
     title = 'SIM'
+
+elif title[:3] in FLIGHT_EVENTS and title not in MISNOMER_CLASSES:
+    event_code = title
+    title = 'FLT'
 
 elif title[:3] in CLASS_TYPES:
     title = title[:3]
@@ -233,7 +228,7 @@ elif title[:3] in IGNORE_EVENTS:
 elif title[:3] in PTT_EVENT:
     event_code = title[4:]
     title = title[:3]
-
+# Some classes will share a code with the above
 elif title in MISNOMER_CLASSES:
     event_code = title
     title = 'LAB'
@@ -241,6 +236,7 @@ elif title in MISNOMER_CLASSES:
 else:  # Catchall for anything that is leftover
     event_code = title
     title = 'LAB'
+
 
 day_dict[title].append(event_code)
 ```
@@ -258,7 +254,10 @@ flowchart TD
     F -->|Yes\ntitle is first 3 of CLASSROOM| G(add to day_dict)
     G -->H[return day_dict]
 ```
-  
+
+Each of these days is built using a list of dictionaries. Unfortunately, due to work timelines wanting this project to be completed sooner rather than later, I began this project prior to our class on Classes and Object Oriented Programming. I considered creating a Class Class so each syllabus day was an instance of it, but I wasn't as confident in how I would write these objects into the file, whereas the documentation for csv had built in support for writing dictionary files. Down the road, the intent is to refactor the code to create a class and use it as a means to explore OOP.
+
+The final challenge was catching all of the valid variations in how a syllabus code is managed from the root file to the final product. While every event has a unique event code, only classroom events (ICW, CAI, IGR) actually use the event code. The remaining ones have a unique "type" event (JMPS 1, JMPS 2, etc). An additional variation was the root code had cases of requiring multiple lines for one class due to a long type name (OFT NATOPS X), or missing the delimiter required to signify a runon event. We added support to detect and retroactively correct the additional line and combine it appropriately while avoding duplication.
 
 
 ## Example Runs
@@ -268,13 +267,16 @@ To see example runs and test results, check the test_files folder. example_input
 
 example_input_2.csv is a more strenuous test, and it contains every type of event in the syllabus. This is the full syllabus for one type of student.
 
+example 3 is the full 180-day syllabus and is the final product of the actual data to be entered. This file is the base syllabus and all other flavors of syllabus are derivative of this one.
+
 ## Testing
 How did you test your code? What did you do to make sure your code was correct? If you wrote unit tests, you can link to them here. If you did run tests, make sure you document them as text files, and include them in your submission. 
 
 During each step of the transformation, I used docstring testing to build unit tests prior to iterating the function. Edge cases were focused on odd characters and typos that I would expect to find in the final product that is provided.
-Functional testing was broken into two major checkpoints - the intermediate step to ensure the csv_lib was working correctly. Then the final product to verify that the syllabus_lib was processing the csv_lib output correctly.
+Functional testing was broken into two major checkpoints - the intermediate step to ensure the csv_lib was working correctly. 
+The file test_data_cleaning.csv shows the output prior to being sent to the consolidate_syllabus() function and was the final check to ensure all of the data from the original file was being processed correctly into an acceptable file for the final function run.
 
-The final run is checking the output file against the expected result
+Then the final product to verify that the syllabus_lib was processing the csv_lib output correctly. This was the final consolidation of the days and events and would be checked against the expected result. We tested this by comparing it to a smaller sample, approximately 30 days worth of data (example 1), testing it on 70 days of schedule (example 2), and then the final full product (example 3).
 
 ## Missing Features / What's Next
 Focus on what you didn't get to do, and what you would do if you had more time, or things you would implement in the future. 
@@ -283,7 +285,11 @@ There are some features to be added later, if desired, to make the program more 
 
 In syllabus_lib, the function check_runon() supports a specified delimiter to determine the flag for a range of events. It's defaulted to '-' (such as P1.080-P1.120), but could be used in other programs with a different indicator (Example range 1:10). In this iteration of the program, one challenge is carrying the specified delimiter deep enough into the program so that it reaches the check_runon() function. In this design, it is there as a helper function and gets called by consolidate_events(), which in turn gets called by normalize_syllabus(). Having this delimiter argument added to each of the next functions only to be used as an argument to the next seems like an added complexity to the more shallow functions reducing the complexity. In the current scope of the program, this delimiter feature is not required, since the provided CSV will always use '-' as it's delimiter. It remains coded in as a feature should another program use this library.
 
+The final consideration is to figure out how to import these programs into Excel 365 so that it can be used organically by Excel. The current challenge for the typical user is working through how to run the program assuming they are not familiar with the command prompt, etc. Having this embedded into an excel file so that we can import the source file, run this program, and then also run the following Excel VBA scripts to finish post-processing would make it a much more sustainable program by reducing input points by the user.
+
 ## Final Reflection
 Write at least a paragraph about your experience in this course. What did you learn? What do you need to do to learn more? Key takeaways? etc.
 
-check_valid_characters() is overaggressive
+This course has been an amazing experience in building robust software and has shown me the path to go from amateur code-writer towards a professional software engineer. My greatest struggle was creating products that could stand the test of time and be flexible enough to handle inputs from left-field without breaking, and the push for standardization, readable code, and outside-the-box thinking has been enlightening. I particularly enjoyed the group meetings and the guided learning that happened in this, as it gave me a chance to take a peek at how other people write code for the same problem. This different perspective often showed me a better or more efficient way to solve a problem and was just as valuable of a learning experience.
+
+I need to stay consistent in breaking down problems into smaller pieces to avoid creating a giant "main", and to continue working with github to align with professional standards. I also hope to continue working with the command prompt as I go deeper into the computer rather than interfacing with the GUI intermediaries. 
