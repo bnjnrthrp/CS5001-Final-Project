@@ -246,6 +246,18 @@ def standardize_headings(data: Tuple[list]) -> tuple:
         data (Tuple[list]): The syllabus data to be processed
         event_types (str): The list of possible event types. Used to differentiate if the column is event codes or types
 
+    Examples:
+        >>> events = (['1', 'CAI', 'P1.060', '0.5'], ['1', 'ICW', 'P2.010-P2.070', '6.5'])
+        >>> standardize_headings(events)
+        (['1', 'CAI', 'P1.060', '0.5'], ['1', 'ICW', 'P2.010-P2.070', '6.5'])
+
+        >>> events = (['1', 'P1.060', 'CAI', '0.5'], ['1', 'P2.010-P2.070', 'ICW', '6.5'])
+        >>> standardize_headings(events)
+        (['1', 'CAI', 'P1.060', '0.5'], ['1', 'ICW', 'P2.010-P2.070', '6.5'])
+
+
+
+
     Returns:
         Tuple[list]: The standardized syllabus
     """
@@ -275,7 +287,7 @@ def standardize_headings(data: Tuple[list]) -> tuple:
         temp = [line[day], line[event_type], line[code], line[hrs]]
         rtn.append(temp)
 
-    return rtn
+    return tuple(rtn)
 
 
 def normalize_syllabus(data: Tuple[list]) -> Tuple[list]:
