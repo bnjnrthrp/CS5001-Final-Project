@@ -239,6 +239,45 @@ def combine_events(events: list, delimiter: str = '-', type: bool = False) -> li
     return copy
 
 
+def standardize_headings(data: Tuple[list]) -> tuple:
+    """Validates a syllabus to take non-standard formats and correct it to a standard: Day, Type, Code, Time
+
+    Args:
+        data (Tuple[list]): The syllabus data to be processed
+        event_types (str): The list of possible event types. Used to differentiate if the column is event codes or types
+
+    Returns:
+        Tuple[list]: The standardized syllabus
+    """
+    rtn = []
+    copy = list(data)
+    headings = HEADINGS
+    day, event_type, code, hrs = "", "", "", ""
+    # Go through each line and find the column that has events
+    for item in data[0]:
+        try:
+            if item.isnumeric():
+                day = data[0].index(item)
+                continue
+        except ValueError:
+            continue
+
+        if item in EVENT_TYPES:
+            event_type = data[0].index(item)
+            if event_type == 2:
+                code = 1
+            else:
+                code = 2
+
+        hrs = 3
+
+    for line in data:
+        temp = [line[day], line[event_type], line[code], line[hrs]]
+        rtn.append(temp)
+
+    return rtn
+
+
 def normalize_syllabus(data: Tuple[list]) -> Tuple[list]:
     """Runner function that normalizes the syllabus data for final processing using two helper functions. 
     Takes csv data in the form of a tuple, distributes the associated module
@@ -256,9 +295,10 @@ def normalize_syllabus(data: Tuple[list]) -> Tuple[list]:
         tuple: The cleaned syllabus csv file
     """
     # Takes the generic table format and associates each event to its designated module day
-    rtn = distribute_days(data)
+    distributed = distribute_days(data)
+    standardized = standardize_headings(distributed)
     # Combines runon events into a single line then returns the resulting tuple of lists.
-    return consolidate_events(rtn)
+    return consolidate_events(standardized)
 
 
 def consolidate_days(syllabus: Tuple[list]) -> Tuple[dict]:
