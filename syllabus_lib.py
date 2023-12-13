@@ -19,9 +19,9 @@ HEADINGS = ['DAY', 'TYPE', 'EVENT', 'HRS']
 EVENT_TYPES = ['DAY', 'ICW', 'PTT', 'CAI', 'IGR',
                'LAB', 'MISC', 'HRS', 'LOCATION', 'FLT', 'SIM']
 FLIGHT_EVENTS = ['FAM', 'SAR', 'DIP', 'NAT', 'INS', 'TAC']
-SIM_EVENTS = ['OFT', 'WTT']
+SIM_EVENTS = ['OFT', 'WTT', 'CST']
 CLASS_TYPES = ['ICW', 'CAI', 'IGR']
-LAB_TYPES = ['JMPS']
+LAB_TYPES = ['JMPS', 'NATS', 'IMAT', 'SAC']
 PTT_EVENT = ['PTT', 'DTTT']
 IGNORE_EVENTS = ['MSN']
 # Deceptive ground courses that would otherwise map as a flight
@@ -411,6 +411,71 @@ def consolidate_days(syllabus: Tuple[list]) -> Tuple[dict]:
             break
 
     return tuple(rtn)
+
+
+def correct_event(title: str, event_code: str) -> tuple:
+    """Takes an input event, and figures out what the event type is
+
+    Args:
+        title (str): The full title of the event
+        event_code (str): The event code associated with the event
+
+    Examples:
+        >>> title = "AC JUMPS"
+        >>> event_code = "A5.550"
+        >>> correct_event(title, event_code)
+        ('FLT', 'AC JUMPS')
+
+        >>> title = "DIP SIM 3"
+        >>> event_code = "A14.400"
+        >>> correct_event(title, event_code)
+        ('SIM', 'DIP SIM 3')
+
+
+    Returns:
+        tuple: The corrected title and event code for the normalized syllabus
+    """
+    # checks if an aircrew sim or flight event, and breaks off to new decision tree
+    if event_code[0] == "A":
+        if title[0:4] == "NATS":
+            event_code = title
+            title = 'LAB'
+        elif title[4:7] == "SIM":
+            event_code = title
+            title = 'SIM'
+        elif title[:2] == "AC":
+            event_code = title
+            title = 'FLT'
+
+    # Checks through pilot events
+    elif title[:3] in SIM_EVENTS and title not in MISNOMER_CLASSES:
+        event_code = title
+        title = 'SIM'
+
+    elif title[:3] in FLIGHT_EVENTS and title not in MISNOMER_CLASSES:
+        event_code = title
+        title = 'FLT'
+
+    elif title[:3] in CLASS_TYPES:
+        title = title[:3]
+
+    elif title[:3] in IGNORE_EVENTS:
+        event_code = title
+        title = 'MISC'
+
+    elif title[:3] in PTT_EVENT:
+        event_code = title[4:]
+        title = title[:3]
+    # Some classes will share a code with the above
+    elif title in MISNOMER_CLASSES:
+        event_code = title
+        title = 'LAB'
+
+    else:  # Catchall for anything that is leftover
+        event_code = title
+        title = 'LAB'
+
+    return (title, event_code)
 
 
 def initialize_syllabus_dict(headings: list) -> dict:
