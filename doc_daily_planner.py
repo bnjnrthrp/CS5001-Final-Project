@@ -12,7 +12,7 @@ from file_view import read_csv, write_csv
 from csv_lib import clean_data, remove_line
 from syllabus_lib import normalize_syllabus, HEADINGS, consolidate_days
 
-ROWS_TO_DELETE = ['CIN', 'training hours', 'type', '**']
+ROWS_TO_DELETE = ['CIN', 'training hours', 'type', '**', 'CNATTU', 'WEEK']
 
 
 def check_args_for_help(args: list) -> bool:

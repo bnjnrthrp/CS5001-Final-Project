@@ -17,11 +17,11 @@ from typing import Tuple
 
 HEADINGS = ['DAY', 'TYPE', 'EVENT', 'HRS']
 EVENT_TYPES = ['DAY', 'ICW', 'PTT', 'CAI', 'IGR',
-               'LAB', 'MISC', 'HRS', 'LOCATION', 'FLT', 'SIM']
+               'LAB', 'IMAT', 'MISC', 'HRS', 'LOCATION', 'FLT', 'SIM']
 FLIGHT_EVENTS = ['FAM', 'SAR', 'DIP', 'NAT', 'INS', 'TAC']
 SIM_EVENTS = ['OFT', 'WTT', 'CST']
 CLASS_TYPES = ['ICW', 'CAI', 'IGR']
-LAB_TYPES = ['JMPS', 'NATS', 'IMAT', 'SAC']
+LAB_TYPES = ['JMPS', 'NATS', 'IMAT', 'SAC', 'CRT']
 PTT_EVENT = ['PTT', 'DTTT']
 IGNORE_EVENTS = ['MSN']
 # Deceptive ground courses that would otherwise map as a flight
@@ -263,27 +263,27 @@ def standardize_headings(data: Tuple[list]) -> tuple:
     """
     rtn = []
     copy = list(data)
-    headings = HEADINGS
     day, event_type, code, hrs = "", "", "", ""
+    test_line = data[0]
     # Go through each line and find the column that has events
-    for item in data[0]:
-        try:
-            if item.isnumeric():
-                day = data[0].index(item)
-                continue
-        except ValueError:
-            continue
+    day = 0
+    if test_line[1] in EVENT_TYPES:
+        event_type = 1
+        code = 2
+    else:
+        event_type = 2
+        code = 1
+    hrs = 3
+    # if item in EVENT_TYPES:
+    #     event_type = data[0].index(item)
+    #     if event_type == 2:
+    #         code = 1
+    #     else:
+    #         code = 2
 
-        if item in EVENT_TYPES:
-            event_type = data[0].index(item)
-            if event_type == 2:
-                code = 1
-            else:
-                code = 2
+    # hrs = 3
 
-        hrs = 3
-
-    for line in data:
+    for line in copy:
         temp = [line[day], line[event_type], line[code], line[hrs]]
         rtn.append(temp)
 
@@ -324,11 +324,11 @@ def consolidate_days(syllabus: Tuple[list]) -> Tuple[dict]:
     Examples: 
         >>> example_syllabus = (['2','ICW','P2.120','1.0'], ['2','JMPS 1','P2.160','2.0'], ['3','ICW','P3.010-P3.100','5.5'], ['3','JMPS 2','P3.110','3.0'])
         >>> consolidate_days(example_syllabus)
-        ({'DAY': '2', 'ICW': ['P2.120'], 'PTT': [], 'CAI': [], 'IGR': [], 'LAB': ['JMPS 1'], 'MISC': [], 'HRS': ['1.0', '2.0'], 'LOCATION': [], 'FLT': [], 'SIM': []}, {'DAY': '3', 'ICW': ['P3.010-P3.100'], 'PTT': [], 'CAI': [], 'IGR': [], 'LAB': ['JMPS 2'], 'MISC': [], 'HRS': ['5.5', '3.0'], 'LOCATION': [], 'FLT': [], 'SIM': []})
+        ({'DAY': '2', 'ICW': ['P2.120'], 'PTT': [], 'CAI': [], 'IGR': [], 'LAB': ['JMPS 1'], 'IMAT': [], 'MISC': [], 'HRS': ['1.0', '2.0'], 'LOCATION': [], 'FLT': [], 'SIM': []}, {'DAY': '3', 'ICW': ['P3.010-P3.100'], 'PTT': [], 'CAI': [], 'IGR': [], 'LAB': ['JMPS 2'], 'IMAT': [], 'MISC': [], 'HRS': ['5.5', '3.0'], 'LOCATION': [], 'FLT': [], 'SIM': []})
 
         >>> example_syllabus = (['19','CAI*','P9.010','0.5'], ['19','ICW','P9.020','0.5'])
         >>> consolidate_days(example_syllabus)
-        ({'DAY': '19', 'ICW': ['P9.020'], 'PTT': [], 'CAI': ['P9.010'], 'IGR': [], 'LAB': [], 'MISC': [], 'HRS': ['0.5', '0.5'], 'LOCATION': [], 'FLT': [], 'SIM': []},)
+        ({'DAY': '19', 'ICW': ['P9.020'], 'PTT': [], 'CAI': ['P9.010'], 'IGR': [], 'LAB': [], 'IMAT': [], 'MISC': [], 'HRS': ['0.5', '0.5'], 'LOCATION': [], 'FLT': [], 'SIM': []},)
 
         >>> no_data = ()
         >>> consolidate_days(no_data)
@@ -340,7 +340,6 @@ def consolidate_days(syllabus: Tuple[list]) -> Tuple[dict]:
 
     rtn = []
     current_line = []
-
     index = 0
     day_counter = 0
     # Iterates through the entire document
@@ -350,7 +349,8 @@ def consolidate_days(syllabus: Tuple[list]) -> Tuple[dict]:
             title = current_line[1]
             event_code = current_line[2]
             time_required = current_line[3]
-
+            # Assumes we are processing a pilot syllabus
+            pilot_syllabus = True
             # Check if the day counter matches current event's associated day
             # If false, this indicates we've moved to a new day and need to create a new dictionary
             if day_counter != current_line[0]:
@@ -365,38 +365,42 @@ def consolidate_days(syllabus: Tuple[list]) -> Tuple[dict]:
             # All titles can be identified by their first 3 characters, to standardize the lookups.
             # Will branch individually, set the correct event_code and title variables, then come together at the end.
 
-            if title[:3] in SIM_EVENTS and title not in MISNOMER_CLASSES:
-                event_code = title
-                title = 'SIM'
+            # if title[:3] in SIM_EVENTS and title not in MISNOMER_CLASSES:
+            #     event_code = title
+            #     title = 'SIM'
 
-            elif title[:3] in FLIGHT_EVENTS and title not in MISNOMER_CLASSES:
-                event_code = title
-                title = 'FLT'
+            # elif title[:3] in FLIGHT_EVENTS and title not in MISNOMER_CLASSES:
+            #     event_code = title
+            #     title = 'FLT'
 
-            elif title[:3] in CLASS_TYPES:
-                title = title[:3]
+            # elif title[:3] in CLASS_TYPES:
+            #     title = title[:3]
 
-            elif title[:3] in IGNORE_EVENTS:
-                event_code = title
-                title = 'MISC'
+            # elif title[:3] in IGNORE_EVENTS:
+            #     event_code = title
+            #     title = 'MISC'
 
-            elif title[:3] in PTT_EVENT:
-                event_code = title[4:]
-                title = title[:3]
-            # Some classes will share a code with the above
-            elif title in MISNOMER_CLASSES:
-                event_code = title
-                title = 'LAB'
+            # elif title[:3] in PTT_EVENT:
+            #     event_code = title[4:]
+            #     title = title[:3]
+            # # Some classes will share a code with the above
+            # elif title in MISNOMER_CLASSES:
+            #     event_code = title
+            #     title = 'LAB'
 
-            else:  # Catchall for anything that is leftover
-                event_code = title
-                title = 'LAB'
-
+            # else:  # Catchall for anything that is leftover
+            #     event_code = title
+            #     title = 'LAB'
+            # If the program catches a syllabus code beginning with 'A' - it changes to an aircrew syllabus.
+            if event_code[0] == 'A':
+                pilot_syllabus = False
+            title, event_code = correct_event(
+                title, event_code, pilot_syllabus)
             # Inputs the final result from decision tree into the dictionary
             day_dict[title].append(event_code)
 
             # Inputs the time required into the dictionary
-            day_dict[EVENT_TYPES[7]].append(time_required)
+            day_dict[EVENT_TYPES[8]].append(time_required)
 
             # Checks if the next event line is a new day or not.
             next_line = syllabus[index + 1]
@@ -413,22 +417,23 @@ def consolidate_days(syllabus: Tuple[list]) -> Tuple[dict]:
     return tuple(rtn)
 
 
-def correct_event(title: str, event_code: str) -> tuple:
+def correct_event(title: str, event_code: str, pilot: bool = True) -> tuple:
     """Takes an input event, and figures out what the event type is
 
     Args:
         title (str): The full title of the event
         event_code (str): The event code associated with the event
+        pilot (bool): True if the syllabus is a pilot event, otherwise false for aircrew syllabus
 
     Examples:
         >>> title = "AC JUMPS"
         >>> event_code = "A5.550"
-        >>> correct_event(title, event_code)
+        >>> correct_event(title, event_code, False)
         ('FLT', 'AC JUMPS')
 
         >>> title = "DIP SIM 3"
         >>> event_code = "A14.400"
-        >>> correct_event(title, event_code)
+        >>> correct_event(title, event_code, False)
         ('SIM', 'DIP SIM 3')
 
 
@@ -436,7 +441,7 @@ def correct_event(title: str, event_code: str) -> tuple:
         tuple: The corrected title and event code for the normalized syllabus
     """
     # checks if an aircrew sim or flight event, and breaks off to new decision tree
-    if event_code[0] == "A":
+    if pilot is False:
         if title[0:4] == "NATS":
             event_code = title
             title = 'LAB'
@@ -446,6 +451,14 @@ def correct_event(title: str, event_code: str) -> tuple:
         elif title[:2] == "AC":
             event_code = title
             title = 'FLT'
+        elif title[:3] in CLASS_TYPES:
+            title = title[:3]
+        elif title[:3] in IGNORE_EVENTS:
+            event_code = title
+            title = 'MISC'
+        else:
+            event_code = title
+            title = 'LAB'
 
     # Checks through pilot events
     elif title[:3] in SIM_EVENTS and title not in MISNOMER_CLASSES:
@@ -523,6 +536,12 @@ def check_same_day(event1: list, event2: list) -> bool:
     return event1[0] == event2[0]
 
 
+# test = (['1', 'A1.010', 'LAB', '8'],
+#         ['1', 'Squadron INDOC', '', ''],
+#         ['6', 'A1.060', 'SAC A', '4'],
+#         ['6', 'A1.070', 'CAI', '4'])
+
+# standardize_headings(test)
 if __name__ == "__main__":
     import doctest
 
